@@ -56,8 +56,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Swagger 문서 접근 허용
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        // 회원가입(POST)과 로그인(POST)만 누구나 접근 가능하도록 허용
-                        .requestMatchers(HttpMethod.POST, "/api/users", "/api/users/login").permitAll()
+                        // 회원가입·로그인·토큰재발급·로그아웃은 인증 없이 접근 허용
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/users", "/api/users/login",
+                                "/api/users/reissue", "/api/users/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/token/validation").permitAll()
                         // 그 외의 모든 요청(유저 삭제 등)은 인증(JWT 토큰)이 필요함
                         .anyRequest().authenticated()
                 )

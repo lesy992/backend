@@ -6,34 +6,34 @@ import com.sum.backend.entity.Board;
 import com.sum.backend.entity.User;
 import com.sum.backend.repository.ArticleRepository;
 import com.sum.backend.repository.BoardRepository;
+import com.sum.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
-
     private final BoardRepository boardRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public Article witeArticle(CreateArticle article, User author){
+    public Article writeArticle(CreateArticle article, String loginId) {
+        User author = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        Optional<Board> board = boardRepository.findById(article.getBoardId());
+        Board board = boardRepository.findById(article.getBoardId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시판입니다."));
 
         Article newArticle = Article.builder()
                 .author(author)
-                .board(board.get())
+                .board(board)
                 .title(article.getTitle())
                 .content(article.getContent())
                 .build();
 
-        // DB에 저장 후, 영속화된 엔티티 반환
         return articleRepository.save(newArticle);
     }
 }

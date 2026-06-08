@@ -2,10 +2,10 @@ package com.sum.backend.controller;
 
 import com.sum.backend.dto.CreateArticle;
 import com.sum.backend.entity.Article;
-import com.sum.backend.entity.User;
 import com.sum.backend.service.ArticleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +21,10 @@ public class ArticleController {
     private final ArticleService articleService;
 
     @PostMapping("/articles")
-    public ResponseEntity<Article> createArticle(@RequestBody CreateArticle request, @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(articleService.witeArticle(request, user));
+    public ResponseEntity<Article> createArticle(
+            @RequestBody @Valid CreateArticle request,
+            @AuthenticationPrincipal String loginId) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(articleService.writeArticle(request, loginId));
     }
 }

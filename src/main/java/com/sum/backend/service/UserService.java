@@ -7,9 +7,11 @@ import com.sum.backend.jwt.JwtUtil;
 import com.sum.backend.repository.RefreshTokenRepository;
 import com.sum.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor // final로 선언된 필드의 의존성을 자동으로 주입 (생성자 주입)
@@ -52,16 +54,17 @@ public class UserService {
     }
 
     /**
-     * 유저 삭제 메서드 (Hard Delete)
+     * 유저 삭제 메서드 (Hard Delete) - 본인 계정만 삭제 가능
      */
     @Transactional
-    public void deleteUser(Long id) {
-        // 1. 삭제하려는 유저가 실제로 존재하는지 검증
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("존재하지 않는 유저이거나 이미 삭제되었습니다.");
+    public void deleteUser(Long id, String loginId) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        if (!user.getLoginId().equals(loginId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 삭제할 수 있습니다.");
         }
 
-        // 2. DB에서 유저 삭제
         userRepository.deleteById(id);
     }
 

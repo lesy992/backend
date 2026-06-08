@@ -5,8 +5,8 @@ spring:
     # localhost:3306/ 뒤의 이름은 실제 MySQL에 생성한 데이터베이스(스키마) 명칭과 일치해야 합니다.
     url: jdbc:mysql://localhost:3306/mystudy_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: mystudy_user
-    password: mystudy1!
+    username: ${DB_USERNAME:mystudy_user}
+    password: ${DB_PASSWORD:mystudy1!}
 
   jpa:
     hibernate:
@@ -18,7 +18,7 @@ spring:
         format_sql: true
         highlight_sql: true
 jwt:
-  # 32바이트 이상의 임의 문자열을 Base64로 인코딩한 값이어야 합니다. (아래는 예시입니다)
-  secret: c3ByaW5nLWJvb3Qtand0LXR1dG9yaWFsLXNlY3JldC1rZXktZXhhbXBsZQ==
+  # 운영 환경에서는 반드시 JWT_SECRET 환경 변수로 교체하세요. (32바이트 이상의 랜덤 문자열을 Base64 인코딩한 값)
+  secret: ${JWT_SECRET:c3ByaW5nLWJvb3Qtand0LXR1dG9yaWFsLXNlY3JldC1rZXktZXhhbXBsZQ==}
   access-expiration-time: 300000
   refresh-expiration-time: 1209600000

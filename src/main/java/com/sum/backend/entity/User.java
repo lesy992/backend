@@ -9,8 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users") // 예약어 충돌 방지를 위해 테이블명 지정
 @Getter
-@Setter // 데이터 수정이 필요한 필드를 위해 선언 (실무에서는 비즈니스 메서드로 대체 권장)
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 스펙을 위한 기본 생성자 (접근 제어로 안전성 확보)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class User {
