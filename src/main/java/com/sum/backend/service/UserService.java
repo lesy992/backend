@@ -105,7 +105,7 @@ public class UserService {
 
         // 2. DB에 해당 Refresh Token이 존재하는지 확인 (해커가 임의로 만든 토큰 차단)
         RefreshToken findToken = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("DB에 존재하지 않는 토큰입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("다른 기기에서 로그인되어 인증이 만료되었습니다. 다시 로그인해주세요."));
 
         // 3. 새로운 Access Token 발급
         return jwtUtil.generateAccessToken(findToken.getLoginId());

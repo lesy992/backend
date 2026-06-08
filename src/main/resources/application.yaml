@@ -20,5 +20,5 @@ spring:
 jwt:
   # 32바이트 이상의 임의 문자열을 Base64로 인코딩한 값이어야 합니다. (아래는 예시입니다)
   secret: c3ByaW5nLWJvb3Qtand0LXR1dG9yaWFsLXNlY3JldC1rZXktZXhhbXBsZQ==
-  access-expiration-time: 1800000 # 30분 (1000 * 60 * 30)
-  refresh-expiration-time: 1209600000 # 14일 (1000 * 60 * 60 * 24 * 14)
+  access-expiration-time: 300000
+  refresh-expiration-time: 1209600000
