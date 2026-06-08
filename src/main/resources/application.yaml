@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    # localhost:3306/ 뒤의 이름은 실제 MySQL에 생성한 데이터베이스(스키마) 명칭과 일치해야 합니다.
+    url: jdbc:mysql://localhost:3306/mystudy_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: mystudy_user
+    password: mystudy1!
+
+  jpa:
+    hibernate:
+      # 개발 초기 단계에서는 주로 update나 create를 사용합니다.
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+jwt:
+  # 32바이트 이상의 임의 문자열을 Base64로 인코딩한 값이어야 합니다. (아래는 예시입니다)
+  secret: c3ByaW5nLWJvb3Qtand0LXR1dG9yaWFsLXNlY3JldC1rZXktZXhhbXBsZQ==
+  access-expiration-time: 1800000 # 30분 (1000 * 60 * 30)
+  refresh-expiration-time: 1209600000 # 14일 (1000 * 60 * 60 * 24 * 14)
