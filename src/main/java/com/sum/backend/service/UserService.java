@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor // Lombok: final로 선언된 필드의 의존성을 자동으로 주입 (생성자 주입)
+@RequiredArgsConstructor // final로 선언된 필드의 의존성을 자동으로 주입 (생성자 주입)
 public class UserService {
 
     private final UserRepository userRepository;

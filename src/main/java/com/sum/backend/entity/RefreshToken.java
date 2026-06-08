@@ -15,17 +15,16 @@ public class RefreshToken {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String loginId; // 어떤 유저의 교환권인지 식별
+    private String loginId;
 
     @Column(nullable = false, length = 512)
-    private String token; // Refresh Token 값
+    private String token;
 
     public RefreshToken(String loginId, String token) {
         this.loginId = loginId;
         this.token = token;
     }
 
-    // 토큰 갱신 메서드 (기존 로그인 유저가 새로 로그인했을 때 교체용)
     public void updateToken(String token) {
         this.token = token;
     }

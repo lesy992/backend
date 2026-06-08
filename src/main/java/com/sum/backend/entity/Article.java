@@ -4,34 +4,35 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users") // 예약어 충돌 방지를 위해 테이블명 지정
 @Getter
 @Setter // 데이터 수정이 필요한 필드를 위해 선언 (실무에서는 비즈니스 메서드로 대체 권장)
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 스펙을 위한 기본 생성자 (접근 제어로 안전성 확보)
 @AllArgsConstructor
 @Builder
-public class User {
+public class Article {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 20)
-    private String username;
+    @Column(nullable = false)
+    private String title;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String loginId;
+    @Lob
+    @Column(nullable = false)
+    private String content;
 
-    @Column(nullable = false, length = 100)
-    private String password;
+    @ManyToOne
+    @JoinColumn(name = "author_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    private User author;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
-    private LocalDateTime lastLoginAt;
+    @ManyToOne
+    @JoinColumn(name = "board_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    private Board board;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -40,8 +41,4 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-    public void updateLastLoginTime() {
-        this.lastLoginAt = LocalDateTime.now();
-    }
 }

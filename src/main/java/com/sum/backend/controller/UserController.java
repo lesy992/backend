@@ -52,6 +52,8 @@ public class UserController {
     public ResponseEntity<String> login(@RequestBody LoginUser request, HttpServletResponse response) {
         String[] tokens = userService.login(request.getLoginId(), request.getPassword());
 
+        System.out.println(tokens[0]);
+
         // 1. Access Token 쿠키 (수명: 30분)
         ResponseCookie accessCookie = createCookie("access_token", tokens[0], 60 * 30);
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
