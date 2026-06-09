@@ -57,7 +57,7 @@ public class UserController {
         ResponseCookie refreshCookie = createCookie("refresh_token", tokens[1], 60 * 60 * 24 * 14);
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        return ResponseEntity.ok("로그인 성공");
+        return ResponseEntity.ok("tokens : " + tokens[0]);
     }
 
     @PostMapping("/reissue")

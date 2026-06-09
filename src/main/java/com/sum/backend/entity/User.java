@@ -1,5 +1,6 @@
 package com.sum.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -24,9 +25,11 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String loginId;
 
+    @JsonIgnore
     @Column(nullable = false, length = 100)
     private String password;
 
+    @JsonIgnore
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 

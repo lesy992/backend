@@ -1,5 +1,6 @@
 package com.sum.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,6 +31,7 @@ public class Article {
     private User author;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "board_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Board board;
 
@@ -40,4 +42,9 @@ public class Article {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public void update(String title, String content) {
+        if (title != null) this.title = title;
+        if (content != null) this.content = content;
+    }
 }
