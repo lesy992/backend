@@ -101,16 +101,12 @@ public class UserController {
         return ResponseEntity.ok("로그아웃 완료");
     }
 
-    @Operation(summary = "JWT 토큰 확인", description = "Authorization 헤더의 Bearer 토큰 유효성을 확인합니다.")
+    @Operation(summary = "JWT 토큰 확인", description = "access_token 쿠키의 유효성을 확인합니다.")
     @GetMapping("/token/validation")
-    public ResponseEntity<String> jwtValidate(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization 헤더가 없습니다.");
-        }
-        String token = authHeader.substring(7);
-        if (!jwtUtil.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("유효하지 않은 토큰입니다.");
+    public ResponseEntity<String> jwtValidate() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || "anonymousUser".equals(auth.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
         }
         return ResponseEntity.ok("유효한 토큰입니다.");
     }

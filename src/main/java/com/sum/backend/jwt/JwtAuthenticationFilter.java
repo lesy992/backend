@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 3. 토큰이 존재하고 서명/만료일이 유효한지 검증합니다.
         // (DB 조회 없이 순수하게 토큰 자체가 유효한지만 빠르고 가볍게 검사합니다)
-        if (token != null && jwtUtil.validateToken(token)) {
+        if (token != null && jwtUtil.validateToken(token) && jwtUtil.isAccessToken(token)) {
 
             // 4. 유효하다면 SecurityContext에 인증 정보를 저장하여 컨트롤러 통과를 허용합니다.
             String loginId = jwtUtil.getLoginIdFromToken(token);

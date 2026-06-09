@@ -13,9 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor // final로 선언된 필드의 의존성을 자동으로 주입 (생성자 주입)
 public class UserService {
+
+    // 유저가 없을 때도 BCrypt를 실행해 응답 시간 차이로 아이디 존재 여부를 추측하지 못하게 함
+    private static final String DUMMY_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder; // SecurityConfig에서 등록한 빈 주입
@@ -65,6 +70,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 삭제할 수 있습니다.");
         }
 
+        refreshTokenRepository.deleteByLoginId(user.getLoginId());
         userRepository.deleteById(id);
     }
 
@@ -73,13 +79,15 @@ public class UserService {
      */
     @Transactional
     public String[] login(String loginId, String password) {
-        User user = userRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 아이디입니다."));
+        Optional<User> userOpt = userRepository.findByLoginId(loginId);
+        String storedHash = userOpt.map(User::getPassword).orElse(DUMMY_HASH);
+        boolean matches = passwordEncoder.matches(password, storedHash);
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        if (userOpt.isEmpty() || !matches) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다.");
         }
 
+        User user = userOpt.get();
         user.updateLastLoginTime();
 
         // 두 개의 토큰 생성

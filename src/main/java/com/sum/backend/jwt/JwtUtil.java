@@ -28,30 +28,36 @@ public class JwtUtil {
         this.refreshExpirationTime = refreshExpirationTime;
     }
 
-    /**
-     * Access Token 생성 메서드 (수명이 짧음)
-     */
     public String generateAccessToken(String loginId) {
-        return createToken(loginId, accessExpirationTime);
+        return createToken(loginId, accessExpirationTime, "access");
     }
 
-    /**
-     * Refresh Token 생성 메서드 (수명이 긺)
-     */
     public String generateRefreshToken(String loginId) {
-        return createToken(loginId, refreshExpirationTime);
+        return createToken(loginId, refreshExpirationTime, "refresh");
     }
 
-    /**
-     * 토큰 생성 중복 코드를 줄이기 위한 내부(private) 공통 메서드
-     */
-    private String createToken(String loginId, long expirationTime) {
+    private String createToken(String loginId, long expirationTime, String type) {
         return Jwts.builder()
-                .subject(loginId) // 토큰의 주체 (유저 아이디)
-                .issuedAt(new Date(System.currentTimeMillis())) // 발행 시간
-                .expiration(new Date(System.currentTimeMillis() + expirationTime)) // 각 토큰에 맞는 만료 시간 부여
-                .signWith(secretKey) // 암호화 알고리즘 및 키 적용
+                .subject(loginId)
+                .claim("typ", type)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(secretKey)
                 .compact();
+    }
+
+    public boolean isAccessToken(String token) {
+        try {
+            String type = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("typ", String.class);
+            return "access".equals(type);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
