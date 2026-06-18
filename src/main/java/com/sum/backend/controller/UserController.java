@@ -29,14 +29,14 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
-    @Operation(summary = "유저 생성", description = "유저의 계정을 생성합니다.")
+    @Operation(summary = "유저 생성", description = "유저의 계정을 생성.")
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody @Valid CreateUser user) {
         User created = userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponse(created));
     }
 
-    @Operation(summary = "유저 삭제", description = "본인 계정을 삭제합니다.")
+    @Operation(summary = "유저 삭제", description = "본인 계정을 삭제.")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(
             @Parameter(description = "삭제할 유저의 고유 ID", example = "1")
@@ -101,7 +101,7 @@ public class UserController {
         return ResponseEntity.ok("로그아웃 완료");
     }
 
-    @Operation(summary = "JWT 토큰 확인", description = "access_token 쿠키의 유효성을 확인합니다.")
+    @Operation(summary = "JWT 토큰 확인", description = "access_token 쿠키의 유효성을 확인.")
     @GetMapping("/token/validation")
     public ResponseEntity<String> jwtValidate() {
         var auth = SecurityContextHolder.getContext().getAuthentication();

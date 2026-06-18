@@ -15,7 +15,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+/**
+ * 게시글(Article) 관련 실제 비즈니스 로직을 담당하는 서비스.
+ *
+ * @Transactional : 메서드 실행 동안 하나의 DB 트랜잭션으로 묶는다.
+ *  - 중간에 예외가 나면 모두 롤백된다.
+ *  - 엔티티 값을 바꾸면(setter 등) 트랜잭션이 끝날 때 JPA가 변경을 감지(더티 체킹)해 자동으로 UPDATE 한다.
+ *  - readOnly = true 면 "조회 전용"이라 변경 감지를 하지 않아(=DB에 쓰지 않아) 성능상 유리하다.
+ */
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
@@ -25,6 +34,12 @@ public class ArticleService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
 
+    /**
+     * 게시글 작성.
+     * 1) 로그인 ID로 작성자(User) 조회 → 없으면 예외
+     * 2) 글을 올릴 게시판(Board) 조회 → 없으면 예외
+     * 3) 빌더로 새 게시글을 만들어(조회수 0으로 시작) 저장
+     */
     @Transactional
     public Article writeArticle(CreateArticle article, String loginId) {
         User author = userRepository.findByLoginId(loginId)
@@ -38,25 +53,58 @@ public class ArticleService {
                 .board(board)
                 .title(article.getTitle())
                 .content(article.getContent())
+                .viewCount(0L)
                 .build();
 
         return articleRepository.save(newArticle);
     }
 
+    /**
+     * 게시글 1개 상세 조회 + 조회수 1 증가.
+     * 1) 게시글 조회 → 없으면 예외
+     * 2) 요청한 게시판(boardId)에 실제로 속한 글인지 검증 (URL 위조 방지)
+     * 3) DB에서 조회수를 원자적으로 +1 (동시에 여러 명이 봐도 누락되지 않음)
+     * 4) 증가된 값이 반영된 게시글을 다시 조회해 반환
+     *    (increaseViewCount 가 영속성 컨텍스트를 비우므로, 다시 조회하면 최신 조회수가 들어온다)
+     */
     @Transactional
+    public Article getArticle(Long boardId, Long articleId) {
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
+        if (!article.getBoard().getId().equals(boardId)) {
+            throw new IllegalArgumentException("해당 게시판에 속한 게시글이 아닙니다.");
+        }
+
+        // DB에서 원자적으로 조회수 증가 후, 증가된 값이 반영된 게시글을 다시 조회해 반환
+        articleRepository.increaseViewCount(articleId);
+        return articleRepository.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+    }
+
+    /** 특정 게시판의 게시글 목록 (최신순 첫 페이지). 조회만 하므로 readOnly. */
+    @Transactional(readOnly = true)
     public List<Article> getArticles(Long boardId, Pageable pageable) {
         return articleRepository.findByBoardId(boardId, pageable);
     }
 
+    /** 기준 글(articleId)보다 "이전(오래된)" 글들을 조회. 무한 스크롤에서 아래로 더 보기. */
     @Transactional
     public List<Article> getArticlesForOld(Long boardId, Long articleId, Pageable pageable) {
         return articleRepository.findArticlesForOld(boardId, articleId, pageable);
     }
+
+    /** 기준 글(articleId)보다 "이후(최신)" 글들을 조회. 무한 스크롤에서 위로 새로고침. */
     @Transactional
     public List<Article> getArticlesForNew(Long boardId, Long articleId, Pageable pageable) {
         return articleRepository.findArticlesForNew(boardId, articleId, pageable);
     }
 
+    /**
+     * 게시글 수정. 본인이 쓴 글만 수정 가능.
+     * 검증 순서: 요청자 확인 → 게시판 확인 → 게시글 확인 → 게시판 일치 확인 → 작성자 본인 확인.
+     * article.update(...) 로 값만 바꿔두면 트랜잭션 종료 시 JPA가 자동으로 UPDATE 한다(별도 save 불필요).
+     */
     @Transactional
     public Article editArticle(Long boardId, Long articleId, EditArticle editArticle, String loginId) {
 
@@ -82,11 +130,16 @@ public class ArticleService {
             throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
         }
 
+        // 6. 값 변경 → 트랜잭션 종료 시 더티 체킹으로 자동 UPDATE
         article.update(editArticle.getTitle(), editArticle.getContent());
 
         return article;
     }
 
+    /**
+     * 게시글 삭제. 본인이 쓴 글만 삭제 가능.
+     * 게시글을 지우기 전에, 그 글에 달린 댓글들을 먼저 삭제한다(자식 데이터 정리).
+     */
     @Transactional
     public void deleteArticle(Long boardId, Long articleId, String loginId) {
         User requestUser = userRepository.findByLoginId(loginId)
@@ -106,7 +159,7 @@ public class ArticleService {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }
 
-        commentRepository.deleteByArticleId(articleId);
-        articleRepository.delete(article);
+        commentRepository.deleteByArticleId(articleId); // 댓글 먼저 삭제
+        articleRepository.delete(article);              // 그 다음 게시글 삭제
     }
 }

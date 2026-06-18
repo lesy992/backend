@@ -1,0 +1,66 @@
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql_server
+    restart: always
+    platform: linux/amd64
+    environment:
+      TZ: Asia/Seoul
+      MYSQL_ROOT_PASSWORD: mystudy1!
+      MYSQL_DATABASE: mystudy_db
+      MYSQL_USER: mystudy_user
+      MYSQL_PASSWORD: mystudy1!
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - app-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: elasticsearch_server
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - TZ=Asia/Seoul
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    command: >
+      bash -c "
+        if [ ! -d /usr/share/elasticsearch/plugins/analysis-nori ]; then
+          /usr/share/elasticsearch/bin/elasticsearch-plugin install analysis-nori -b;
+        fi;
+        /usr/local/bin/docker-entrypoint.sh eswrapper
+      "
+    volumes:
+      - ./es_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.1
+    container_name: kibana_server
+    restart: always
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - TZ=Asia/Seoul
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

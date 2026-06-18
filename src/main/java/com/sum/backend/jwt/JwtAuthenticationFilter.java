@@ -27,10 +27,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = null;
 
-        // 1. 요청에서 모든 쿠키를 가져옵니다.
+        // 1. 요청에서 모든 쿠키를 가져옴
         Cookie[] cookies = request.getCookies();
 
-        // 2. 쿠키 중 이름이 "access_token"인 쿠키를 찾습니다.
+        // 2. 쿠키 중 이름이 "access_token"인 쿠키를 찾음
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("access_token".equals(cookie.getName())) { // 기존 "jwt"에서 이름 변경

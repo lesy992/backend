@@ -62,7 +62,7 @@ public class JwtUtil {
 
     /**
      * 1. 토큰의 유효성을 검증하는 메서드 (기존 코드 유지)
-     * 서명 위변조, 만료 여부 등을 확인하여 정상적인 토큰인지 반환합니다.
+     * 서명 위변조, 만료 여부 등을 확인하여 정상적인 토큰인지 반환
      */
     public boolean validateToken(String token) {
         try {

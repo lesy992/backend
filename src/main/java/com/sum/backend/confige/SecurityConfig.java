@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     /**
      * 추가된 부분: AuthenticationManager 빈 등록
-     * UserService 등에서 인증 로직을 수행할 때 사용할 수 있도록 스프링 컨테이너에 노출합니다.
+     * UserService 등에서 인증 로직을 수행할 때 사용할 수 있도록 스프링 컨테이너에 노출
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
