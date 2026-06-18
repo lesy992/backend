@@ -78,4 +78,20 @@ public class CommentController {
         return ResponseEntity.ok(commentService.editComment(boardId, articleId, commentId, request, loginId));
     }
 
+    /**
+     * 댓글 삭제. 본인이 쓴 댓글만 삭제 가능. 부모 댓글을 지우면 대댓글도 함께 삭제된다.
+     */
+    @Operation(
+            summary = "댓글 삭제",
+            description = "본인이 작성한 댓글을 삭제. 부모 댓글을 삭제하면 대댓글도 함께 삭제되며, 성공 시 204 No Content 를 반환")
+    @DeleteMapping("/{boardId}/articles/{articleId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @Parameter(description = "게시판 ID") @PathVariable Long boardId,
+            @Parameter(description = "게시글 ID") @PathVariable Long articleId,
+            @Parameter(description = "댓글 ID") @PathVariable Long commentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal String loginId) {
+        commentService.deleteComment(boardId, articleId, commentId, loginId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

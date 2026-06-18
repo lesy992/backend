@@ -120,4 +120,35 @@ public class CommentService {
         return new CommentResponse(comment);
     }
 
+    /**
+     * 댓글 삭제. 본인이 쓴 댓글만 삭제 가능.
+     * 검증: 요청자 확인 → 게시글/게시판 확인 → 댓글 확인 → 그 댓글이 이 게시글 소속인지 → 작성자 본인인지.
+     * 부모 댓글을 삭제하면 그 댓글의 대댓글(replies)도 cascade/orphanRemoval 설정에 의해 함께 삭제된다.
+     */
+    @Transactional
+    public void deleteComment(Long boardId, Long articleId, Long commentId, String loginId) {
+        User requestUser = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
+        if (!article.getBoard().getId().equals(boardId)) {
+            throw new IllegalArgumentException("해당 게시판에 속한 게시글이 아닙니다.");
+        }
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
+
+        if (!comment.getArticle().getId().equals(articleId)) {
+            throw new IllegalArgumentException("해당 게시글에 속한 댓글이 아닙니다.");
+        }
+
+        if (!comment.getAuthor().getId().equals(requestUser.getId())) {
+            throw new IllegalArgumentException("댓글 삭제 권한이 없습니다.");
+        }
+
+        commentRepository.delete(comment); // 대댓글(replies)도 함께 삭제됨
+    }
+
 }
