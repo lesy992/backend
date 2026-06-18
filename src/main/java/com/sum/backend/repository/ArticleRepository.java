@@ -22,6 +22,10 @@ public interface ArticleRepository extends JpaRepository<Article, Long>{
     // findByBoardId → "board_id 컬럼이 일치하는 게시글들을 조회" + Pageable 로 페이징 처리.
     List<Article> findByBoardId(Long boardId, Pageable pageable);
 
+    // ES 검색으로 얻은 id 목록에 해당하는 게시글들을, pageable(페이지/정렬) 기준으로 조회.
+    // findByIdIn → "id 컬럼이 주어진 목록(IN) 안에 있는 게시글들을 조회"
+    List<Article> findByIdIn(List<Long> ids, Pageable pageable);
+
     @Query(value = "SELECT a FROM Article a " +
             "WHERE a.board.id = :boardId AND a.id < :articleId " +
             "ORDER BY a.createdAt DESC")

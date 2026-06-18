@@ -1,21 +1,25 @@
 package com.sum.backend.service;
 
+import com.sum.backend.dto.ArticleDocument;
 import com.sum.backend.dto.CreateArticle;
 import com.sum.backend.dto.EditArticle;
 import com.sum.backend.entity.Article;
 import com.sum.backend.entity.Board;
 import com.sum.backend.entity.User;
+import com.sum.backend.event.ArticleDeleteEvent;
+import com.sum.backend.event.ArticleIndexEvent;
+import com.sum.backend.event.ArticleViewCountEvent;
 import com.sum.backend.repository.ArticleRepository;
 import com.sum.backend.repository.BoardRepository;
 import com.sum.backend.repository.CommentRepository;
 import com.sum.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * 게시글(Article) 관련 실제 비즈니스 로직을 담당하는 서비스.
@@ -33,6 +37,8 @@ public class ArticleService {
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final ElasticsearchService elasticsearchService;
 
     /**
      * 게시글 작성.
@@ -56,7 +62,10 @@ public class ArticleService {
                 .viewCount(0L)
                 .build();
 
-        return articleRepository.save(newArticle);
+        Article savedArticle = articleRepository.save(newArticle);
+        // 트랜잭션 안에서 문서로 변환해 두고, 커밋 이후 ES에 색인하도록 이벤트 발행
+        eventPublisher.publishEvent(new ArticleIndexEvent(ArticleDocument.fromEntity(savedArticle)));
+        return savedArticle;
     }
 
     /**
@@ -78,8 +87,13 @@ public class ArticleService {
 
         // DB에서 원자적으로 조회수 증가 후, 증가된 값이 반영된 게시글을 다시 조회해 반환
         articleRepository.increaseViewCount(articleId);
-        return articleRepository.findById(articleId)
+        Article updated = articleRepository.findById(articleId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
+        // 커밋 이후 ES의 viewCount만 부분 업데이트하도록 이벤트 발행
+        eventPublisher.publishEvent(new ArticleViewCountEvent(updated.getId(), updated.getViewCount()));
+
+        return updated;
     }
 
     /** 특정 게시판의 게시글 목록 (최신순 첫 페이지). 조회만 하므로 readOnly. */
@@ -133,6 +147,9 @@ public class ArticleService {
         // 6. 값 변경 → 트랜잭션 종료 시 더티 체킹으로 자동 UPDATE
         article.update(editArticle.getTitle(), editArticle.getContent());
 
+        // 변경 내용을 커밋 이후 ES에 재색인하도록 이벤트 발행
+        eventPublisher.publishEvent(new ArticleIndexEvent(ArticleDocument.fromEntity(article)));
+
         return article;
     }
 
@@ -161,5 +178,27 @@ public class ArticleService {
 
         commentRepository.deleteByArticleId(articleId); // 댓글 먼저 삭제
         articleRepository.delete(article);              // 그 다음 게시글 삭제
+
+        // 커밋 이후 ES 인덱스에서도 제거하도록 이벤트 발행
+        eventPublisher.publishEvent(new ArticleDeleteEvent(articleId));
+    }
+
+    /**
+     * 키워드로 (게시판 구분 없이) 전체 게시글 검색.
+     *  1) Elasticsearch 로 keyword 에 매칭되는 게시글 id 목록을 가져온다. (페이징 X)
+     *  2) 그 id 들로 MySQL 을 조회하면서, 이때 페이징(pageable)을 적용해 한 페이지만 반환한다.
+     *
+     * 정렬/페이징은 MySQL 단계에서 pageable 기준(기본: createdAt 내림차순)으로 처리한다.
+     * 조회만 하므로 readOnly.
+     */
+    @Transactional(readOnly = true)
+    public List<Article> searchArticles(String keyword, Pageable pageable) {
+        List<Long> ids = elasticsearchService.search(keyword);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        // id 들 중에서 pageable(페이지 번호/크기/정렬)에 맞는 한 페이지만 MySQL 에서 조회
+        return articleRepository.findByIdIn(ids, pageable);
     }
 }

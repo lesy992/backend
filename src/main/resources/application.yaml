@@ -22,3 +22,9 @@ jwt:
   secret: ${JWT_SECRET:c3ByaW5nLWJvb3Qtand0LXR1dG9yaWFsLXNlY3JldC1rZXktZXhhbXBsZQ==}
   access-expiration-time: 300000
   refresh-expiration-time: 1209600000
+
+elasticsearch:
+  # ES 8은 보안 활성화 시 기본이 https입니다. 운영 환경에서는 환경 변수로 교체하세요.
+  uris: ${ES_URIS:http://localhost:9200}
+  username: ${ES_USERNAME:elastic}
+  password: ${ES_PASSWORD:changeme}

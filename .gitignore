@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker volume data (Elasticsearch / MySQL) ###
+es_data/
+mysql_data/

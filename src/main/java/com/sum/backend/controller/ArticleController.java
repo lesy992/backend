@@ -77,6 +77,24 @@ public class ArticleController {
         return articleService.getArticles(boardId, pageable);
     }
 
+
+    /**
+     * 전체 게시글 통합 검색 (게시판 구분 없음, 페이징).
+     *  - keyword 로 Elasticsearch 전체 검색
+     * - @PageableDefault : 기본 한 페이지 10개, 생성일(createdAt) 기준 내림차순
+     */
+    @Operation(
+            summary = "게시글 통합 검색",
+            description = "게시판 구분 없이 검색어로 전체 게시글을 조회")
+    @GetMapping("/articles/search")
+    public List<Article> searchArticles(
+            @Parameter(description = "검색어 기준으로 검색") @RequestParam(required = true) String keyword,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        // keyword 로 Elasticsearch 전체 검색 → id 추출 → MySQL 조회 결과 반환
+        return articleService.searchArticles(keyword, pageable);
+    }
+
     /**
      * 게시글 1개 상세 조회.
      * 이 API를 호출할 때마다 조회수(viewCount)가 1 증가한다. (실제 증가 처리는 서비스에서)
